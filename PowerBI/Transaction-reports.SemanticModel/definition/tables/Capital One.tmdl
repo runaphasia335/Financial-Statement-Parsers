@@ -1,0 +1,75 @@
+table 'Capital One'
+	lineageTag: 24e3ac38-dfb5-4337-a83d-aa04f2911029
+
+	column 'Card Number'
+		dataType: string
+		lineageTag: 478a7862-cd49-4b93-a9d9-b55cba0afbcc
+		summarizeBy: none
+		sourceColumn: Card Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Statement_Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 09402215-c65f-4faa-b3f1-3d642cb8255e
+		summarizeBy: none
+		sourceColumn: Statement_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Transaction_Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 93f65020-f7ce-42bb-a2e6-0a7205040217
+		summarizeBy: none
+		sourceColumn: Transaction_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Amount
+		dataType: double
+		lineageTag: 4433f37c-8a7c-4f5f-bbad-42e402b1567c
+		summarizeBy: sum
+		sourceColumn: Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Description
+		dataType: string
+		lineageTag: d38d47c4-f5ff-41d7-b418-55069b70f4ba
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column Type
+		dataType: string
+		lineageTag: 20e9b37e-7644-425e-a4fd-bd5ab0755eae
+		summarizeBy: none
+		sourceColumn: Type
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Capital One' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost", "finance"),
+				    statements_capital_one = Source{[Schema="statements",Item="capital_one"]}[Data],
+				    #"Removed Timestamp Column" = Table.RemoveColumns(statements_capital_one,{"insert_timestamp"}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Removed Timestamp Column",{{"cc_last_four", "Card Number"}, {"statement_date", "Statement_Date"}, {"transact_date", "Transaction_Date"}, {"post_date", "Post_Date"}, {"amount", "Amount"}, {"description", "Description"}, {"type", "Type"}}),
+				    #"Removed Post Date Column" = Table.RemoveColumns(#"Renamed Columns",{"Post_Date"})
+				in
+				    #"Removed Post Date Column"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

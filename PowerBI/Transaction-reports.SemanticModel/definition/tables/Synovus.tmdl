@@ -1,0 +1,66 @@
+table Synovus
+	lineageTag: 9a00c4db-2be8-42ab-a1a0-b59ea5a34c27
+
+	column Statement_Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 97848516-fb9d-4b77-acea-09c82132d37a
+		summarizeBy: none
+		sourceColumn: Statement_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Transaction_Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e5bb2d25-ad7b-4a5b-bc33-78b51e9d6de7
+		summarizeBy: none
+		sourceColumn: Transaction_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Amount
+		dataType: double
+		lineageTag: b6e99d83-2e0b-438f-a886-fe4f3475cac3
+		summarizeBy: sum
+		sourceColumn: Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Description
+		dataType: string
+		lineageTag: fe58270d-48bb-44d9-85c0-0e81310dcae9
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column Type
+		dataType: string
+		lineageTag: da124fe5-15bf-40ec-9cc6-26785b92c4c9
+		summarizeBy: none
+		sourceColumn: Type
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Synovus = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost", "finance"),
+				    statements_synovus = Source{[Schema="statements",Item="synovus"]}[Data],
+				    #"Removed Timestamp Column" = Table.RemoveColumns(statements_synovus,{"insert_timestamp"}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Removed Timestamp Column",{{"statement_date", "Statement_Date"}, {"transact_date", "Transaction_Date"}, {"amount", "Amount"}, {"description", "Description"}, {"type", "Type"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
