@@ -1,0 +1,9 @@
+"Bank Statement Parser/run_logs/"
+"Bank Statement Parser/archive/"
+"Bank Statement Parser/drop_zone/"
+"Credit Statement Parser/run_logs/"
+"Credit Statement Parser/archive/"
+"Credit Statement Parser/drop_zone/"
+power_env/
+_pycache_/
+
