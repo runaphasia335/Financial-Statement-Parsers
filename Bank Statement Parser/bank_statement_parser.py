@@ -70,6 +70,8 @@ DEBIT_ALIASES   = {"debit", "withdrawals", "withdrawal", "preauthorized wd", "ch
 CREDIT_ALIASES  = {"credit", "deposits", "deposit", "preauthorize credit", "payments in"}
 AMOUNT_ALIASES  = {"amount", "transaction amount", "net amount", "value"}
 BALANCE_ALIASES = {"balance", "running balance", "closing balance"}
+TRANSACTION_RE = re.compile(
+    r"(?m)^(\d{1,2}-\d{2})\s+(.+?)\s+([\(\-]?\$?[\d,]+\.\d{2}\)?)$" )
 
 FOLDER_PATH = r"C:\Users\carlo\Documents\Projects\Financial Statement Parser\Bank Statement Parser\\"
 DROP_ZONE = FOLDER_PATH + "drop_zone\\"
@@ -151,6 +153,24 @@ def find_column(columns: list[str], aliases: set) -> str | None:
             return col
     return None
 
+def extract_statement_date(text):
+    """
+    Extracts the statement date from the given text.
+
+    Args:
+        text (str): The text to search for the statement date.
+
+    Returns:
+        date or None: The extracted date if found and parsed successfully, otherwise None.
+    """
+    pattern = r'This statement:\s+(\w+ \d{1,2}, \d{4})'
+    match = re.search(pattern, text)
+    if match:
+        date_str = match.group(1)
+        try:
+            return datetime.strptime(date_str, "%B %d, %Y").date()
+        except ValueError:
+            pass
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STRATEGY 1 – TABLE EXTRACTION
@@ -262,25 +282,6 @@ def normalize_table_df(df: pd.DataFrame, debug: bool = False) -> pd.DataFrame:
 # STRATEGY 2 – REGEX LINE PARSING (fallback)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def extract_statement_date(text):
-    """
-    Extracts the statement date from the given text.
-
-    Args:
-        text (str): The text to search for the statement date.
-
-    Returns:
-        date or None: The extracted date if found and parsed successfully, otherwise None.
-    """
-    pattern = r'This statement:\s+(\w+ \d{1,2}, \d{4})'
-    match = re.search(pattern, text)
-    if match:
-        date_str = match.group(1)
-        try:
-            return datetime.strptime(date_str, "%B %d, %Y").date()
-        except ValueError:
-            pass
-
 def extract_from_text(pdf_path: str, debug: bool = False) -> pd.DataFrame:
     """
     Fallback: extract full page text and search for transaction lines using regex.
@@ -288,9 +289,6 @@ def extract_from_text(pdf_path: str, debug: bool = False) -> pd.DataFrame:
     Example: 01-17 Preauthorized Credit VENMO CASHOUT 226.00
     """
     # Each transaction line: MM-DD  <description>  <amount>
-    TRANSACTION_RE = re.compile(
-        r"(?m)^(\d{1,2}-\d{2})\s+(.+?)\s+([\(\-]?\$?[\d,]+\.\d{2}\)?)$"
-    )
 
     transactions = []
     statement_date = None
